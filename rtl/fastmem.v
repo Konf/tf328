@@ -38,6 +38,7 @@ module fastmem(
 
            input 	    CLKCPU,
            input 	    RESET,
+           input        HALF_IN, 
 
            input [23:0]     A,
 
@@ -64,12 +65,24 @@ module fastmem(
 wire [5:0] zaddr = {A[6:1]};
 
 reg configured = 'b0;
-reg shutup		= 'b0;
+reg shutup	   = 'b0;
+reg half_ram;
+
 reg [7:4] data_out;
 reg [7:5] base_address;
 
 wire Z2_WRITE = (Z2_ACCESS | RW20);
 wire Z2_READ = (Z2_ACCESS | ~RW20);
+
+always @(posedge CLKCPU) begin 
+
+    if (RESET == 1'b0) begin 
+
+        half_ram <= HALF_IN;
+
+    end
+
+end 
 
 always @(negedge DS20 or negedge RESET) begin
 
@@ -94,7 +107,13 @@ always @(negedge DS20 or negedge RESET) begin
         
         case (zaddr)
             'h00: data_out[7:4] <= 4'he;
-            'h01: data_out[7:4] <= 4'h0;
+            'h01: begin 
+                if (half_ram == 1'b1) begin
+                    data_out[7:4] <= 4'h7;
+                end else begin 
+                    data_out[7:4] <= 4'h0;
+                end 
+            end
             'h02: data_out[7:4] <= 4'hb;
             'h03: data_out[7:4] <= 4'hd;
             'h04: data_out[7:4] <= 4'h7;
@@ -114,8 +133,8 @@ end
 wire [3:0] bank;
 assign bank[0] = A[23:21] != 3'b001; // $200000
 assign bank[1] = A[23:21] != 3'b010; // $400000
-assign bank[2] = A[23:21] != 3'b011; // $600000
-assign bank[3] = A[23:21] != 3'b100; // $800000
+assign bank[2] = half_ram | A[23:21] != 3'b011; // $600000
+assign bank[3] = half_ram | A[23:21] != 3'b100; // $800000
 
 wire [1:0] chip_ras = {&bank[3:2], &bank[1:0]};
 wire chip_selected = &chip_ras[1:0] | ~configured;
