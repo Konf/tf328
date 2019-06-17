@@ -133,11 +133,12 @@ end
 wire [3:0] bank;
 assign bank[0] = A[23:21] != 3'b001; // $200000
 assign bank[1] = A[23:21] != 3'b010; // $400000
-assign bank[2] = half_ram | A[23:21] != 3'b011; // $600000
-assign bank[3] = half_ram | A[23:21] != 3'b100; // $800000
+assign bank[2] = (half_ram | A[23:21] != 3'b011) & (~half_ram | A[23:20] != 4'hC); // $600000 or $C00000
+assign bank[3] = (half_ram | A[23:21] != 3'b100) & (~half_ram | A[23:19] != {4'hD, 1'b0}); // $800000 of D0 0000
 
 wire [1:0] chip_ras = {&bank[3:2], &bank[1:0]};
-wire chip_selected = &chip_ras[1:0] | ~configured;
+wire    chip_selected = &chip_ras[1:0];
+   
 
 wire [3:0] casint;
 assign casint[3] = A[1] | A[0];

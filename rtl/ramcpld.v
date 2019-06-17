@@ -50,10 +50,8 @@ module ramcpld(
 		
 		output		 IOR,
 		output		 IOW,
-		
-		output 		 FOURMBO,
-		input 		 FOURMBI
 
+		input 		 MEMSIZE
        );
 
 reg [2:0] POR = 3'b111;
@@ -62,7 +60,7 @@ fastmem FASTRAM(
 					
 					.CLKCPU	(	CLKCPU	),
 					.RESET	(	RESET & ~POR[2]	),
-					.HALF_IN    (   FOURMBI    ),
+					.HALF_IN    (   MEMSIZE    ),
 					.AS20		(	AS20    ),
 					.DS20		(  DS20		),
 					.RW20		(  RW20		),
@@ -109,6 +107,5 @@ assign PUNT = POR[2] | RAM_ACCESS & Z2_ACCESS  ? 1'bz : 1'b0;
 assign INT2 = 1'bz;
 assign DSACK[1] = FASTCYCLE & RAM_READY ? 1'bz : 1'b0;
 assign DSACK[0] = RAM_READY? 1'bz : 1'b0;
-assign FOURMBO = 1'b0;
 
 endmodule
